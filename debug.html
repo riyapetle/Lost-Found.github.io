@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Lost & Found</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .debug-section {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007cba;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Lost & Found Debug Tool</h1>
+    
+    <div class="debug-section">
+        <h3>1. Supabase Connection Test</h3>
+        <p id="connection-status">Testing connection...</p>
+        <button onclick="testConnection()">Test Connection</button>
+    </div>
+
+    <div class="debug-section">
+        <h3>2. Database Table Check</h3>
+        <p id="table-status">Checking table...</p>
+        <button onclick="checkTable()">Check Items Table</button>
+    </div>
+
+    <div class="debug-section">
+        <h3>3. Sample Data</h3>
+        <p id="data-status">Checking data...</p>
+        <button onclick="checkData()">Check Existing Data</button>
+        <button onclick="addSampleData()">Add Sample Data</button>
+    </div>
+
+    <div class="debug-section">
+        <h3>4. Storage Bucket Check</h3>
+        <p id="storage-status">Checking storage...</p>
+        <button onclick="checkStorage()">Check Storage</button>
+    </div>
+
+    <div class="debug-section">
+        <h3>5. Debug Log</h3>
+        <pre id="debug-log">Ready to debug...\n</pre>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <script src="js/supabase-config.js"></script>
+    <script>
+        let debugLog = '';
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            debugLog += `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+            document.getElementById('debug-log').textContent = debugLog;
+            console.log(`[DEBUG] ${message}`);
+        }
+
+        function updateStatus(elementId, message, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.parentElement.className = `debug-section ${isSuccess ? 'success' : 'error'}`;
+        }
+
+        async function testConnection() {
+            log('Testing Supabase connection...');
+            
+            try {
+                if (!supabaseClient || !supabaseClient.isConfigured()) {
+                    throw new Error('Supabase client not configured');
+                }
+
+                const client = supabaseClient.getClient();
+                
+                // Test a simple query
+                const { data, error } = await client.from('items').select('count', { count: 'exact', head: true });
+                
+                if (error) {
+                    throw error;
+                }
+
+                updateStatus('connection-status', '✅ Connection successful!', true);
+                log('Supabase connection successful');
+                
+                // Automatically check table after successful connection
+                checkTable();
+                
+            } catch (error) {
+                updateStatus('connection-status', `❌ Connection failed: ${error.message}`, false);
+                log(`Connection failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkTable() {
+            log('Checking items table structure...');
+            
+            try {
+                const client = supabaseClient.getClient();
+                
+                // Try to get table info
+                const { data, error } = await client
+                    .from('items')
+                    .select('*')
+                    .limit(1);
+
+                if (error) {
+                    throw error;
+                }
+
+                updateStatus('table-status', '✅ Items table exists and is accessible', true);
+                log('Items table check successful');
+                
+                // Automatically check data
+                checkData();
+                
+            } catch (error) {
+                updateStatus('table-status', `❌ Table error: ${error.message}`, false);
+                log(`Table check failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkData() {
+            log('Checking existing data in items table...');
+            
+            try {
+                const client = supabaseClient.getClient();
+                
+                const { data, error, count } = await client
+                    .from('items')
+                    .select('*', { count: 'exact' });
+
+                if (error) {
+                    throw error;
+                }
+
+                if (count === 0) {
+                    updateStatus('data-status', '⚠️ No data found in table', false);
+                    log('No data found in items table');
+                } else {
+                    updateStatus('data-status', `✅ Found ${count} items in database`, true);
+                    log(`Found ${count} items in database`);
+                    log(`Sample item: ${JSON.stringify(data[0], null, 2)}`);
+                }
+
+            } catch (error) {
+                updateStatus('data-status', `❌ Data check failed: ${error.message}`, false);
+                log(`Data check failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function addSampleData() {
+            log('Adding sample data to items table...');
+            
+            try {
+                const client = supabaseClient.getClient();
+
+                const sampleItems = [
+                    {
+                        type: 'lost',
+                        title: 'iPhone 13 Pro',
+                        category: 'electronics',
+                        location: 'Central Park, NYC',
+                        description: 'Black iPhone 13 Pro with a cracked screen protector. Lost near the main fountain area.',
+                        image_url: 'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&h=300&fit=crop',
+                        reporter_name: 'Sarah Johnson',
+                        reporter_email: 'sarah.j@email.com',
+                        reporter_phone: '+1 (555) 123-4567'
+                    },
+                    {
+                        type: 'found',
+                        title: 'Brown Leather Wallet',
+                        category: 'accessories',
+                        location: 'Starbucks on 5th Avenue',
+                        description: 'Brown leather wallet found on a table. Contains various cards but no ID visible.',
+                        image_url: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=300&fit=crop',
+                        reporter_name: 'Mike Chen',
+                        reporter_email: 'mike.chen@email.com',
+                        reporter_phone: '+1 (555) 987-6543'
+                    },
+                    {
+                        type: 'lost',
+                        title: 'Silver MacBook Pro',
+                        category: 'electronics',
+                        location: 'NYU Library',
+                        description: 'Silver MacBook Pro 14-inch with stickers. Left in the study area on the 3rd floor.',
+                        image_url: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=300&fit=crop',
+                        reporter_name: 'Emily Davis',
+                        reporter_email: 'emily.davis@email.com',
+                        reporter_phone: '+1 (555) 456-7890'
+                    }
+                ];
+
+                const { data, error } = await client
+                    .from('items')
+                    .insert(sampleItems)
+                    .select();
+
+                if (error) {
+                    throw error;
+                }
+
+                updateStatus('data-status', `✅ Successfully added ${data.length} sample items!`, true);
+                log(`Successfully added ${data.length} sample items`);
+                
+                // Automatically check data again
+                setTimeout(checkData, 1000);
+                
+            } catch (error) {
+                updateStatus('data-status', `❌ Failed to add sample data: ${error.message}`, false);
+                log(`Failed to add sample data: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkStorage() {
+            log('Checking storage bucket...');
+            
+            try {
+                const client = supabaseClient.getClient();
+                
+                const { data, error } = await client.storage.listBuckets();
+                
+                if (error) {
+                    throw error;
+                }
+
+                const bucket = data.find(b => b.name === 'item-images');
+                if (bucket) {
+                    updateStatus('storage-status', '✅ Storage bucket "item-images" exists', true);
+                    log('Storage bucket check successful');
+                } else {
+                    updateStatus('storage-status', '❌ Storage bucket "item-images" not found', false);
+                    log('Storage bucket not found', 'error');
+                }
+                
+            } catch (error) {
+                updateStatus('storage-status', `❌ Storage check failed: ${error.message}`, false);
+                log(`Storage check failed: ${error.message}`, 'error');
+            }
+        }
+
+        function clearLog() {
+            debugLog = 'Log cleared...\n';
+            document.getElementById('debug-log').textContent = debugLog;
+        }
+
+        // Auto-run connection test on page load
+        window.addEventListener('load', () => {
+            log('Debug tool loaded');
+            setTimeout(testConnection, 1000);
+        });
+    </script>
+</body>
+</html>

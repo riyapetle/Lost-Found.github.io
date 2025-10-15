@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Lost Item - Lost & Found</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-search"></i>
+                <span>Lost & Found</span>
+            </div>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="report-lost.html" class="nav-link active">Report Lost</a>
+                <a href="report-found.html" class="nav-link">Report Found</a>
+            </div>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header Section -->
+        <section class="hero" style="padding: 2rem 0;">
+            <div class="hero-content">
+                <h1><i class="fas fa-exclamation-triangle"></i> Report Lost Item</h1>
+                <p>Help others help you find what you've lost</p>
+            </div>
+        </section>
+
+        <!-- Form Section -->
+        <section class="form-section" style="padding: 3rem 0; background: white;">
+            <div class="container">
+                <div class="form-container" style="max-width: 600px; margin: 0 auto;">
+                    <div class="form-header" style="text-align: center; margin-bottom: 2rem;">
+                        <h2>Lost Item Details</h2>
+                        <p style="color: #6b7280;">Please provide as much detail as possible to help others identify your item</p>
+                    </div>
+
+                    <form id="reportLostForm" class="report-form">
+                        <!-- Item Name -->
+                        <div class="form-group">
+                            <label for="itemName"><i class="fas fa-tag"></i> Item Name *</label>
+                            <input type="text" id="itemName" required placeholder="e.g., iPhone 13 Pro, Blue Backpack, Gold Ring...">
+                            <small style="color: #6b7280;">Be specific with brand, color, and model if applicable</small>
+                        </div>
+
+                        <!-- Category -->
+                        <div class="form-group">
+                            <label for="category"><i class="fas fa-list"></i> Category *</label>
+                            <select id="category" required>
+                                <option value="">Select a category</option>
+                                <option value="electronics">Electronics</option>
+                                <option value="clothing">Clothing</option>
+                                <option value="accessories">Accessories</option>
+                                <option value="documents">Documents</option>
+                                <option value="keys">Keys</option>
+                                <option value="bags">Bags</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <!-- Location -->
+                        <div class="form-group">
+                            <label for="location"><i class="fas fa-map-marker-alt"></i> Where did you lose it? *</label>
+                            <input type="text" id="location" required placeholder="e.g., Central Park near fountain, Starbucks on 5th Ave...">
+                            <small style="color: #6b7280;">Be as specific as possible about the location</small>
+                        </div>
+
+                        <!-- Date Lost -->
+                        <div class="form-group">
+                            <label for="dateLost"><i class="fas fa-calendar"></i> When did you lose it?</label>
+                            <input type="date" id="dateLost">
+                            <small style="color: #6b7280;">Approximate date is fine</small>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="form-group">
+                            <label for="description"><i class="fas fa-align-left"></i> Description *</label>
+                            <textarea id="description" required rows="4" placeholder="Describe your item in detail. Include any distinctive features, damages, or unique markings that would help identify it..."></textarea>
+                            <div class="char-counter">
+                                <span id="charCount">0</span>/500 characters
+                            </div>
+                        </div>
+
+                        <!-- Image Upload -->
+                        <div class="form-group">
+                            <label for="itemImage"><i class="fas fa-camera"></i> Upload Image</label>
+                            <div class="image-upload-area" id="imageUploadArea">
+                                <input type="file" id="itemImage" accept="image/*" style="display: none;">
+                                <div class="upload-placeholder" onclick="document.getElementById('itemImage').click()">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>Click to upload an image</p>
+                                    <small>Supported formats: JPG, PNG, GIF (Max 5MB)</small>
+                                </div>
+                                <div class="image-preview" id="imagePreview" style="display: none;">
+                                    <img id="previewImg" src="" alt="Preview">
+                                    <button type="button" class="remove-image" onclick="removeImage()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <small style="color: #6b7280;">A clear image will significantly help others identify your item</small>
+                        </div>
+
+                        <!-- Contact Information -->
+                        <div class="contact-section" style="border-top: 1px solid #e5e7eb; padding-top: 2rem; margin-top: 2rem;">
+                            <h3 style="margin-bottom: 1rem; color: #374151;">
+                                <i class="fas fa-address-book"></i> Your Contact Information
+                            </h3>
+
+                            <div class="form-group">
+                                <label for="reporterName"><i class="fas fa-user"></i> Your Name *</label>
+                                <input type="text" id="reporterName" required placeholder="Your full name">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="reporterEmail"><i class="fas fa-envelope"></i> Email Address *</label>
+                                <input type="email" id="reporterEmail" required placeholder="your.email@example.com">
+                                <small style="color: #6b7280;">We'll use this to notify you if someone finds your item</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="reporterPhone"><i class="fas fa-phone"></i> Phone Number</label>
+                                <input type="tel" id="reporterPhone" placeholder="+1 (555) 123-4567">
+                                <small style="color: #6b7280;">Optional but recommended for faster contact</small>
+                            </div>
+                        </div>
+
+                        <!-- Reward Section -->
+                        <div class="reward-section" style="background: #f8fafc; padding: 1.5rem; border-radius: 8px; margin: 2rem 0;">
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="rewardOffered">
+                                    <span class="checkmark"></span>
+                                    <i class="fas fa-gift" style="margin-right: 0.5rem;"></i>
+                                    I'm offering a reward for this item
+                                </label>
+                            </div>
+
+                            <div class="form-group" id="rewardDetails" style="display: none; margin-top: 1rem;">
+                                <label for="rewardAmount">Reward Details</label>
+                                <input type="text" id="rewardAmount" placeholder="e.g., $50 reward, Dinner voucher, etc.">
+                                <small style="color: #6b7280;">Optional: Describe what you're offering as a reward</small>
+                            </div>
+                        </div>
+
+                        <!-- Privacy Notice -->
+                        <div class="privacy-notice" style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 1rem; margin: 2rem 0; border-radius: 4px;">
+                            <p style="margin: 0; color: #92400e; font-size: 0.9rem;">
+                                <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
+                                <strong>Privacy Notice:</strong> Your contact information will only be visible to users who click on your item listing. We never share your information with third parties.
+                            </p>
+                        </div>
+
+                        <!-- Agreement -->
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="agreement" required>
+                                <span class="checkmark"></span>
+                                I confirm that all information provided is accurate and I agree to the terms of use
+                            </label>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="form-actions" style="text-align: center; margin-top: 2rem;">
+                            <button type="submit" class="btn-primary" style="padding: 1rem 3rem; font-size: 1.1rem;">
+                                <i class="fas fa-paper-plane"></i>
+                                Report Lost Item
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Success Modal -->
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <div class="modal-body" style="text-align: center; padding: 2rem;">
+                <div style="color: #10b981; font-size: 4rem; margin-bottom: 1rem;">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3 style="color: #10b981; margin-bottom: 1rem;">Item Reported Successfully!</h3>
+                <p style="color: #6b7280; margin-bottom: 2rem;">
+                    Your lost item has been added to our database. We'll notify you via email if someone reports finding it.
+                </p>
+                <div style="display: flex; gap: 1rem; justify-content: center;">
+                    <button class="btn-primary" onclick="goToHome()">
+                        <i class="fas fa-home"></i> View All Items
+                    </button>
+                    <button class="btn-primary" onclick="reportAnother()" style="background: #6b7280;">
+                        <i class="fas fa-plus"></i> Report Another
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Scripts -->
+    <script src="js/supabase-config.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/report.js"></script>
+    <script src="test-database.js"></script>
+    
+    <style>
+        .form-section {
+            min-height: 80vh;
+        }
+        
+        .report-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-upload-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .image-upload-area:hover {
+            border-color: #667eea;
+            background: #f8fafc;
+        }
+        
+        .upload-placeholder i {
+            font-size: 3rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+        }
+        
+        .image-preview {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .image-preview img {
+            max-width: 300px;
+            max-height: 200px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        
+        .remove-image {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            margin-right: 0.5rem;
+        }
+        
+        .char-counter {
+            text-align: right;
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 0.5rem;
+        }
+        
+        .form-actions {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 2rem;
+        }
+    </style>
+</body>
+</html>
